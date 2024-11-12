@@ -1,12 +1,39 @@
     Послідовність запуску системи тактування мікроконтролера:
 
-1). Дозвіл роботи зовнішнього кварцу (High Speed External)                          RCC->CR |= RCC_CR_HSEON; 
+1). RCC->CR |= RCC_CR_HSEON; //Дозвіл роботи зовнішнього кварцу (High Speed External) 
 
-2). Очікування сигналу готовності по роботі з кварцем.                                  while((HSE_Status == 0) && (HSE_Count < HSE_TimeOut)); 
-    Якщо за наданий час, сигнал готовності не отриманий,
-    робота в альтернативному режимі по внутрішньому тактуванню 
-    (High Speed Internal).
+2). while((HSE_Status == 0) && (HSE_Count < HSE_TimeOut)); //Очікування сигналу готовності по роботі з кварцем.
+    
+    Якщо за наданий час, сигнал готовності не отриманий, робота в альтернативному режимі по внутрішньому тактуванню (High Speed Internal).
 
-3). Дозвіл живлення шини APB1.                                                      RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+3). Дозвіл живлення шини APB1.                                                      
+        RCC->APB1ENR |= RCC_APB1ENR_PWREN;
 
 4). Установка режиму роботи стабілізатора напруги відповідно до робочої частоти      PWR->CR |= PWR_CR_VOS;
+
+5). Налаштування параметрів флеш памяті                                              FLASH->ACR |= (FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_PRFTEN | FLASH_ACR_LATENCY_3WS);
+    Увімкнення буфера попередньої вибірки, дозвіл роботи кешей инструкцій та даных. 
+    Кількість циклів 4.
+
+6). Налаштування дільників шин: AHB - 100/1, APB1 - 100/2, APB2 - 100/1  
+        RCC->CFGR |= (RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1); 
+
+7). Налаштування блоку PLL
+    RCC->PLLCFGR |=  RCC_PLLCFGR_PLLM_1; //Установка коефициента входного делителя "М" ФАПЧ (8/2) 4МГц
+    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM_0 | RCC_PLLCFGR_PLLM_2 | RCC_PLLCFGR_PLLM_3 | RCC_PLLCFGR_PLLM_4 | RCC_PLLCFGR_PLLM_5); 
+        
+    RCC->PLLCFGR |=  (RCC_PLLCFGR_PLLN_1 | RCC_PLLCFGR_PLLN_4 | RCC_PLLCFGR_PLLN_5); //Установка коефициента умножителя "N" ФАПЧ (4x50) 200МГц
+    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLN_0 | RCC_PLLCFGR_PLLN_2 | RCC_PLLCFGR_PLLN_3 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_7 | RCC_PLLCFGR_PLLN_8);
+            
+    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLP_0 | RCC_PLLCFGR_PLLP_1); //Установка коефициента выходного делителя "P" ФАПЧ (200/2) 100МГц
+    
+    RCC->PLLCFGR |= RCC_PLLCFGR_PLLQ_2; //Установка коефициента выходного делителя "Q" ФАПЧ (200/4) 50МГц
+    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLQ_0 | RCC_PLLCFGR_PLLQ_1 | RCC_PLLCFGR_PLLQ_3);
+    
+    RCC->PLLCFGR |= RCC_PLLCFGR_PLLSRC; //Выбор источника для блока ФАПЧ от внешнего кварца
+
+
+https://dimoon.ru/obuchalka/stm32f1/uroki-stm32f103-chast-4-nastroyka-rcc.html
+https://www.linux.org.ru/articles/development/17353247
+https://www.youtube.com/watch?v=7yGqxKXzvEQ
+https://radiohlam.ru/stm32_10/
